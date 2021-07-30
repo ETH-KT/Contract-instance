@@ -10,37 +10,39 @@ contract MarriageEvidence is Character{
         admin = msg.sender;
     }
     
-    modifier adminOnly{
+    modifier adminOnly{  
         require(msg.sender == admin ,"require admin");
         _;
     }
+    
     modifier charactersMustBeAddedFirst{
         require(getAllCharater().length != 0,"It is null");
+        _;
+    }
+    
+    modifier signersOnly{
+        require(EvidenceFactory(eviContractAddress).verify(msg.sender),"you not is signer");
         _;
     }
     function deployEvi() external adminOnly charactersMustBeAddedFirst{
         addCharacter(msg.sender,"民政局");
         EvidenceFactory evi = new EvidenceFactory(getAllCharater());
-        eviContractAddress = evi;
+        eviContractAddress = address(evi);
     }
     
     function getSigners() public constant returns(address[]){
-        EvidenceFactory evi = EvidenceFactory(eviContractAddress);
-        return evi.getSigners();
+        return EvidenceFactory(eviContractAddress).getSigners();
     }
     
     function newEvi(string _evi)public adminOnly returns(address){
-        EvidenceFactory evi = EvidenceFactory(eviContractAddress);
-        eviAddress = evi.newEvidence(_evi);
+        eviAddress = EvidenceFactory(eviContractAddress).newEvidence(_evi);
         return eviAddress;
     }
     
-    function sign() public returns(bool) {
-        EvidenceFactory evi = EvidenceFactory(eviContractAddress);
-            return evi.addSignatures(eviAddress);
+    function sign() public signersOnly returns(bool) {
+            return EvidenceFactory(eviContractAddress).addSignatures(eviAddress);
     }
     function getEvi() public constant returns(string,address[],address[]){
-        EvidenceFactory evi = EvidenceFactory(eviContractAddress);
-            return evi.getEvidence(eviAddress);
+            return EvidenceFactory(eviContractAddress).getEvidence(eviAddress);
     }
 }
